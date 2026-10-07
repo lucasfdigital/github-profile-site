@@ -1,36 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# github-profile-site
 
-## Getting Started
+Site configurador do [github-profile-dashboard](../github-profile-dashboard): landing + OAuth do GitHub → cria o repo `user/user` a partir do template e dispara a primeira atualização.
 
-First, run the development server:
+## Rodar local
 
 ```bash
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Registrar o OAuth App (2 min)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. GitHub → Settings → Developer settings → **OAuth Apps** → New OAuth App
+2. **Application name**: `Profile Dashboard Setup`
+3. **Homepage URL**: sua URL (local: `http://localhost:3000`)
+4. **Authorization callback URL**: `https://sua-url/api/auth/callback` (local: `http://localhost:3000/api/auth/callback`)
+5. Gere um **Client secret** e preencha `.env.local`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Scopes pedidos ao usuário: `repo` (criar o repo) + `workflow` (disparar o workflow). O token vive 30 min em cookie httpOnly e é apagado ao concluir — nada é guardado.
 
-## Learn More
+## Deploy na Vercel
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npx vercel
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Adicione as 3 envs (`GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `NEXT_PUBLIC_APP_URL`) no projeto e atualize a callback URL no OAuth App pra URL final.
