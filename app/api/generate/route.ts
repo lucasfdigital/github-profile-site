@@ -19,10 +19,10 @@ export async function POST(req: Request) {
     },
   );
   if (gen.status === 422) {
-    return NextResponse.redirect(`${base}/gerar?erro=existe`);
+    return NextResponse.redirect(`${base}/gerar?erro=existe`, 303);
   }
   if (!gen.ok) {
-    return NextResponse.redirect(`${base}/gerar?erro=github`);
+    return NextResponse.redirect(`${base}/gerar?erro=github`, 303);
   }
 
   // 2. dispara a primeira atualização (o push já dispara também; aqui é garantia)
@@ -38,6 +38,7 @@ export async function POST(req: Request) {
 
   const res = NextResponse.redirect(
     `${base}/sucesso?repo=${encodeURIComponent(`${login}/${login}`)}`,
+    303,
   );
   res.cookies.delete("gh_token");
   return res;
