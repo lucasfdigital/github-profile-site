@@ -1,6 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import StatusMonitor from "./StatusMonitor";
 
 export default function Conteudo() {
   const repo = useSearchParams().get("repo") ?? "";
@@ -20,6 +21,7 @@ export default function Conteudo() {
       >
         Ver meu perfil
       </a>
+      <StatusMonitor repo={repo} />
       <p className="mt-4 text-xs text-zinc-500">
         Não apareceu de primeira? Hard refresh (Ctrl/Cmd + Shift + R) — é o
         cache de imagens do GitHub.
