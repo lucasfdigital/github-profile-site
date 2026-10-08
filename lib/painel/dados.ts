@@ -180,8 +180,14 @@ export async function buscarDadosPainel(
   "use cache";
   cacheLife({ stale: 300, revalidate: 4 * 60 * 60, expire: 24 * 60 * 60 });
 
+  // o build de produção esconde a mensagem de erros lançados aqui dentro;
+  // loga antes para o motivo aparecer nos logs da Vercel
+  const falha = (msg: string) => {
+    console.error(`painel ${login}: ${msg}`);
+    return new Error(msg);
+  };
   const token = process.env.GITHUB_TOKEN;
-  if (!token) throw new Error("GITHUB_TOKEN não configurado");
+  if (!token) throw falha("GITHUB_TOKEN não configurado na Vercel");
   const ano = Number(hoje.slice(0, 4));
   const r = await fetch("https://api.github.com/graphql", {
     method: "POST",
@@ -201,8 +207,10 @@ export async function buscarDadosPainel(
       },
     }),
     signal: AbortSignal.timeout(20000),
+  }).catch((e: unknown) => {
+    throw falha(`GitHub GraphQL: ${e instanceof Error ? e.message : String(e)}`);
   });
-  if (!r.ok) throw new Error(`GitHub GraphQL: HTTP ${r.status}`);
+  if (!r.ok) throw falha(`GitHub GraphQL: HTTP ${r.status}`);
   const j = (await r.json()) as {
     data?: { user: RespostaUsuario | null };
     errors?: { type?: string; message: string }[];
@@ -211,7 +219,7 @@ export async function buscarDadosPainel(
     return null;
   }
   if (j.errors?.length || !j.data?.user) {
-    throw new Error(`GitHub GraphQL: ${j.errors?.map((e) => e.message).join("; ")}`);
+    throw falha(`GitHub GraphQL: ${j.errors?.map((e) => e.message).join("; ")}`);
   }
   return {
     contrib: montarContribuicoes(j.data.user, ano),
