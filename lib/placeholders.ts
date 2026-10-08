@@ -1,0 +1,24 @@
+// Placeholder SVGs committed to a fresh repo BEFORE the first workflow
+// run, so no visitor ever sees another user's data. The cron replaces
+// both files with the real dashboard on the first run.
+export const PLACEHOLDER_DARK = `<svg xmlns="http://www.w3.org/2000/svg" width="880" height="300" viewBox="0 0 880 300" font-family="Inter,ui-sans-serif,system-ui,sans-serif">
+<rect width="880" height="300" rx="16" fill="#131318" stroke="rgba(255,255,255,0.08)"/>
+<style>.pulse{animation:pulse 1.6s ease-in-out infinite;}@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.25;}}</style>
+<circle class="pulse" cx="424" cy="128" r="6" fill="#3FB950"/>
+<circle class="pulse" cx="444" cy="128" r="6" fill="#3FB950" style="animation-delay:0.2s"/>
+<circle class="pulse" cx="464" cy="128" r="6" fill="#3FB950" style="animation-delay:0.4s"/>
+<text x="440" y="180" fill="#FAFAFA" font-size="20" font-weight="600" text-anchor="middle">Gerando seu dashboard…</text>
+<text x="440" y="206" fill="#8B949E" font-size="13" text-anchor="middle">a primeira atualização roda em instantes</text>
+</svg>
+`;
+
+export const PLACEHOLDER_LIGHT = `<svg xmlns="http://www.w3.org/2000/svg" width="880" height="300" viewBox="0 0 880 300" font-family="Inter,ui-sans-serif,system-ui,sans-serif">
+<rect width="880" height="300" rx="16" fill="#FFFFFF" stroke="#E4E4E7"/>
+<style>.pulse{animation:pulse 1.6s ease-in-out infinite;}@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.25;}}</style>
+<circle class="pulse" cx="424" cy="128" r="6" fill="#10B981"/>
+<circle class="pulse" cx="444" cy="128" r="6" fill="#10B981" style="animation-delay:0.2s"/>
+<circle class="pulse" cx="464" cy="128" r="6" fill="#10B981" style="animation-delay:0.4s"/>
+<text x="440" y="180" fill="#18181B" font-size="20" font-weight="600" text-anchor="middle">Gerando seu dashboard…</text>
+<text x="440" y="206" fill="#71717A" font-size="13" text-anchor="middle">a primeira atualização roda em instantes</text>
+</svg>
+`;

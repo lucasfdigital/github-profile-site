@@ -27,6 +27,13 @@ export default async function Conteudo({
           workflow do template continua valendo.
         </p>
       )}
+      {(erro === "setup" || erro === "github") && (
+        <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">
+          Falhou ao configurar o repo ({erro}). Tenta de novo em 1 minuto — se
+          persistir, cria pelo template manual: github.com/lucasfdigital/github-profile-dashboard
+          → Use this template.
+        </p>
+      )}
       <form action="/api/generate" method="POST" className="mt-8 w-full">
         <button
           type="submit"
