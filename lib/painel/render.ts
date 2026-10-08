@@ -357,15 +357,14 @@ export function renderPainel(
     }).format(new Date(opts.atualizadoEm));
     const textoHora = `atualizado em ${quando} (Brasília)`;
     const cy = yTopo + H_TOPO / 2;
-    // a métrica é da DejaVu (mais larga que a Inter): 0.88 aproxima
-    const largHora = (((medir(textoHora) - 2) * 12) / 14) * 0.88;
     const mt = STATIC ? "" : ' class="meta" style="animation-delay:0.05s"';
+    // a bolinha vai dentro do texto: acompanha a largura em qualquer fonte
     p.push(`<g${mt}>`
       + `<rect x="2" y="${f0(cy - 12)}" width="24" height="24" rx="7" fill="url(#temerald)"/>`
       + `<circle cx="14" cy="${f0(cy)}" r="4.5" fill="#FFFFFF"/>`
       + `<text x="36" y="${f0(cy + 5)}" fill="${T.FG}" font-size="15" font-weight="600">GitHub Dashboard</text>`
-      + `<circle cx="${f0(W - 4 - largHora - 8)}" cy="${f0(cy)}" r="3.5" fill="${ACCENT}"/>`
-      + `<text x="${W - 4}" y="${f0(cy + 4)}" fill="${T.TER}" font-size="12" text-anchor="end">${esc(textoHora)}</text>`
+      + `<text x="${W - 4}" y="${f0(cy + 4)}" fill="${T.TER}" font-size="12" text-anchor="end">`
+      + `<tspan fill="${ACCENT}" font-size="10">●</tspan> ${esc(textoHora)}</text>`
       + "</g>");
   }
 
