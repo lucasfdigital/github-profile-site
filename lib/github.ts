@@ -1,8 +1,3 @@
-export const TEMPLATE_OWNER =
-  process.env.TEMPLATE_OWNER ?? "lucasfdigital";
-export const TEMPLATE_REPO =
-  process.env.TEMPLATE_REPO ?? "github-profile-dashboard";
-
 export function getToken(req: Request): string | null {
   const cookie = req.headers.get("cookie") ?? "";
   const m = cookie.match(/(?:^|;\s*)gh_token=([^;]+)/);

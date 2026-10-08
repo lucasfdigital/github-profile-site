@@ -1,19 +1,17 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import StatusMonitor from "./StatusMonitor";
 
 export default function Conteudo() {
-  const repo = useSearchParams().get("repo") ?? "";
-  const user = repo.split("/")[0];
+  const user = useSearchParams().get("user") ?? "";
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col items-center px-6 py-16 text-center">
+    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col items-center px-6 py-16 text-center">
       <p className="text-5xl">🎉</p>
-      <h1 className="mt-4 text-3xl font-bold">Dashboard criado!</h1>
+      <h1 className="mt-4 text-3xl font-bold">Dashboard no ar!</h1>
       <p className="mt-2 text-zinc-400">
-        O repo <code className="text-zinc-200">{repo}</code> foi gerado e a
-        primeira atualização disparada (~2 min).
+        O README de <code className="text-zinc-200">{user}/{user}</code> já
+        mostra o painel. Os dados se atualizam sozinhos a cada 4 horas.
       </p>
       <a
         href={`https://github.com/${user}`}
@@ -21,10 +19,24 @@ export default function Conteudo() {
       >
         Ver meu perfil
       </a>
-      <StatusMonitor repo={repo} />
+      {user && (
+        <div className="mt-8 w-full overflow-hidden rounded-2xl border border-white/10 bg-[#131318] p-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`/api/painel/${encodeURIComponent(user)}`}
+            alt={`Dashboard GitHub de ${user}`}
+            className="w-full"
+          />
+        </div>
+      )}
       <p className="mt-4 text-xs text-zinc-500">
         Não apareceu de primeira? Hard refresh (Ctrl/Cmd + Shift + R) — é o
         cache de imagens do GitHub.
+      </p>
+      <p className="mt-2 text-xs text-zinc-500">
+        Para parar de usar, apague do seu README o bloco entre{" "}
+        <code>github-profile-dash:inicio</code> e{" "}
+        <code>github-profile-dash:fim</code>.
       </p>
     </main>
   );

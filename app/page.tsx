@@ -1,7 +1,7 @@
 import StarsButton from "./components/StarsButton";
 
-const PREVIEW_DARK =
-  "https://raw.githubusercontent.com/lucasfdigital/github-profile-dashboard/main/profile-top.svg";
+// demo ao vivo: o mesmo endpoint que os READMEs usam
+const PREVIEW_DARK = "/api/painel/lucasfdigital";
 const TEMPLATE = "https://github.com/lucasfdigital/github-profile-dashboard";
 
 const FEATURES = [
@@ -14,12 +14,12 @@ const FEATURES = [
     desc: "O README troca sozinho conforme o tema de quem visita seu perfil.",
   },
   {
-    title: "Cron de 4h",
-    desc: "Atualiza sozinho na sua conta, na quota gratuita. Sem servidor no caminho.",
+    title: "Atualiza a cada 4h",
+    desc: "O painel é montado na hora com seus dados. Nada roda na sua conta.",
   },
   {
-    title: "Sem token",
-    desc: "Só API pública do GitHub. Nada seu fica com a gente.",
+    title: "Nada seu guardado",
+    desc: "Só dados públicos do GitHub. Sem banco, sem token salvo.",
   },
   {
     title: "Animações suaves",
@@ -27,7 +27,7 @@ const FEATURES = [
   },
   {
     title: "Do seu jeito",
-    desc: "dashboard.json liga/desliga seções e exclui repos. MIT, faça o que quiser.",
+    desc: "Tire repos das linguagens com ?excluir=repo1,repo2 na URL da imagem. MIT, faça o que quiser.",
   },
 ];
 
@@ -78,9 +78,9 @@ export default function Home() {
           um README vivo
         </h1>
         <p className="mt-4 max-w-2xl text-center text-lg text-zinc-400">
-          KPIs, linguagens e calendário com seus dados reais. O site cria o
-          repo na sua conta com cron de 4h — depois disso, nada depende da
-          gente.
+          KPIs, linguagens e calendário com seus dados reais. O site coloca o
+          painel no README do seu perfil e ele se atualiza sozinho a cada 4
+          horas.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <a
@@ -97,8 +97,8 @@ export default function Home() {
           </a>
         </div>
         <ul className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-1 text-sm text-zinc-400">
-          <li>✓ Sem token</li>
-          <li>✓ Zero servidor depois do setup</li>
+          <li>✓ Atualiza a cada 4h</li>
+          <li>✓ Nada roda na sua conta</li>
           <li>✓ 100% open source (MIT)</li>
         </ul>
 
@@ -134,9 +134,9 @@ export default function Home() {
         </h2>
         <ol className="mt-8 w-full max-w-2xl space-y-4">
           {[
-            ["Conecte o GitHub", "Login OAuth pedindo só o necessário: criar o repo e disparar o workflow."],
-            ["Geramos seu repo", "Criamos seu-user/seu-user a partir do template, com scripts + cron + README."],
-            ["Abra seu perfil", "A primeira atualização roda em ~2 min. Depois, o cron atualiza sozinho a cada 4h."],
+            ["Conecte o GitHub", "Login OAuth pedindo só o necessário: editar o README do seu repo de perfil."],
+            ["Colocamos o painel", "No README de seu-user/seu-user (criamos o repo se não existir). O resto do README fica igual."],
+            ["Abra seu perfil", "O painel aparece na hora e se atualiza sozinho a cada 4 horas."],
           ].map(([t, d], i) => (
             <li key={t} className="flex gap-4">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500 font-bold text-black">
@@ -156,20 +156,23 @@ export default function Home() {
         <p className="mt-4 max-w-2xl text-center text-zinc-400">
           O token do GitHub vive <strong className="text-zinc-200">30 minutos</strong> em
           cookie httpOnly, é usado <strong className="text-zinc-200">uma única vez</strong> para
-          criar o repo e apagado ao concluir. Seus dados de contribuição nunca
-          passam pelo nosso banco — porque não temos banco. Todo o código é
-          aberto (MIT) e está no GitHub para auditar.
+          editar o README e apagado ao concluir. Não temos banco: o painel é
+          montado na hora com os seus dados públicos do GitHub. Para parar,
+          é só apagar o bloco do painel do seu README. Todo o código é aberto
+          (MIT) e está no GitHub para auditar.
         </p>
 
-        <h2 className="mt-20 text-3xl font-bold">Prefere manual?</h2>
+        <h2 className="mt-20 text-3xl font-bold">Prefere sem login?</h2>
         <p className="mt-4 max-w-2xl text-center text-zinc-400">
-          Use o template direto:{" "}
-          <a className="text-emerald-400 underline" href={TEMPLATE}>
-            Use this template
-          </a>{" "}
-          → crie o repo com seu username → aguarde o Actions. Sem site, sem
-          login.
+          Cole isto no README do seu repo de perfil (troque{" "}
+          <code className="text-zinc-200">SEU-USER</code>):
         </p>
+        <pre className="mt-4 w-full max-w-2xl overflow-x-auto rounded-xl border border-white/10 bg-[#131318] p-4 text-left text-xs text-zinc-300">
+          {`<picture>
+<source media="(prefers-color-scheme: dark)" srcset="https://github-profile-dash.vercel.app/api/painel/SEU-USER">
+<img src="https://github-profile-dash.vercel.app/api/painel/SEU-USER?tema=claro" width="860" />
+</picture>`}
+        </pre>
 
         <footer className="mt-16 text-center text-sm text-zinc-500">
           <p>
