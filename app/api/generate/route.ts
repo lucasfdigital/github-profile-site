@@ -62,17 +62,9 @@ export async function POST(req: Request) {
     // segue o jogo: o usuário completa manual (docs no template)
   }
 
-  // 3. tenta disparar a primeira atualização (o push acima já dispara também)
-  try {
-    await gh(
-      `/repos/${login}/${login}/actions/workflows/update-profile-art.yml/dispatches`,
-      token,
-      { method: "POST", body: JSON.stringify({ ref: "main" }) },
-    );
-  } catch {
-    // push já dispara o workflow; segue o jogo
-  }
-
+  // 3. o commit do README acima dispara o workflow via evento push
+  //    (caminho garantido — sem dispatch redundante, mais rápido e sem
+  //    risco de timeout da função).
   const res = NextResponse.redirect(
     `${base}/sucesso?repo=${encodeURIComponent(`${login}/${login}`)}`,
     303,
