@@ -58,7 +58,7 @@ export type RespostaUsuario = {
   repositories: { totalCount: number; nodes: Repo[] };
 };
 
-export type DadosPainel = { contrib: Contribuicoes; stats: Estatisticas };
+export type DadosPainel = { contrib: Contribuicoes; stats: Estatisticas; atualizadoEm: string };
 
 const NIVEIS: Record<string, number> = {
   NONE: 0,
@@ -224,5 +224,6 @@ export async function buscarDadosPainel(
   return {
     contrib: montarContribuicoes(j.data.user, ano),
     stats: montarEstatisticas(j.data.user, excluir),
+    atualizadoEm: new Date().toISOString(),
   };
 }

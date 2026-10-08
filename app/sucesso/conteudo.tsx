@@ -29,6 +29,14 @@ export default function Conteudo() {
           />
         </div>
       )}
+      {user && (
+        <p className="mt-4 text-sm text-zinc-400">
+          Sua página para compartilhar:{" "}
+          <a href={`/${user}`} className="text-emerald-400 underline-offset-4 hover:underline">
+            github-profile-dash.vercel.app/{user}
+          </a>
+        </p>
+      )}
       <p className="mt-4 text-xs text-zinc-500">
         Não apareceu de primeira? Hard refresh (Ctrl/Cmd + Shift + R) — é o
         cache de imagens do GitHub.

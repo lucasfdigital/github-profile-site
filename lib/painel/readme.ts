@@ -1,3 +1,5 @@
+import { queryPainel, type Opcoes } from "./opcoes";
+
 // Bloco do painel no README do perfil. Os marcadores deixam o setup
 // repetível: rodar de novo troca o bloco em vez de duplicar, e o usuário
 // sabe exatamente o que apagar para parar de usar.
@@ -8,14 +10,20 @@ const FIM = "<!-- github-profile-dash:fim -->";
 const BLOCO_ANTIGO =
   /<div align="center">\s*<picture>\s*<source[^>]*profile-top\.svg[^>]*>\s*<img[^>]*profile-top-light\.svg[^>]*>\s*<\/picture>\s*<\/div>/;
 
-export function blocoPainel(base: string, login: string): string {
+export function blocoPainel(
+  base: string,
+  login: string,
+  opcoes: Opcoes = { ocultar: [], excluir: [] },
+): string {
   const url = `${base}/api/painel/${login}`;
+  // dentro de atributo HTML o & vira &amp;
+  const q = (claro: boolean) => queryPainel({ ...opcoes, claro }).replace(/&/g, "&amp;");
   return `${INICIO}
 <div align="center">
 
 <picture>
-<source media="(prefers-color-scheme: dark)" srcset="${url}">
-<img src="${url}?tema=claro" width="860" alt="Dashboard GitHub de ${login}" />
+<source media="(prefers-color-scheme: dark)" srcset="${url}${q(false)}">
+<img src="${url}${q(true)}" width="860" alt="Dashboard GitHub de ${login}" />
 </picture>
 
 </div>

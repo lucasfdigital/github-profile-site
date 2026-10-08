@@ -10,7 +10,10 @@ O README do usuário tem uma imagem que aponta para este site:
 /api/painel/USUARIO              tema escuro
 /api/painel/USUARIO?tema=claro   tema claro
 /api/painel/USUARIO?excluir=repo1,repo2   tira repos das linguagens
+/api/painel/USUARIO?ocultar=topo,cartoes,extras,grafico,linguagens,calendario   esconde partes
 ```
+
+A página `/USUARIO` mostra o painel grande, com tema escuro/claro e link para compartilhar. Na tela de criar (`/gerar`), a pessoa escolhe as partes e os repos a esconder, com prévia ao vivo.
 
 Quando alguém abre o perfil, o GitHub pede a imagem; a rota busca os dados públicos do usuário (uma consulta GraphQL) e monta o SVG. A CDN guarda cada imagem por 4h, então os dados se renovam sozinhos sem nada rodar na conta do usuário. O desenho é um port fiel de `scripts/render_profile_top.py` do template (`lib/painel/render.ts`).
 

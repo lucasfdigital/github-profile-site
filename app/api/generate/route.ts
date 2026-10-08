@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { appUrl, getToken, gh } from "@/lib/github";
 import { blocoPainel, readmeComPainel } from "@/lib/painel/readme";
+import { normalizarOpcoes, semConteudo } from "@/lib/painel/opcoes";
 
 export const maxDuration = 60;
 
@@ -12,6 +13,13 @@ export async function POST(req: Request) {
   if (!token) return NextResponse.redirect(`${base}/`, 303);
   const erro = (tipo: string) =>
     NextResponse.redirect(`${base}/gerar?erro=${tipo}`, 303);
+
+  // escolhas da tela /gerar: partes escondidas e repos fora das linguagens
+  const form = await req.formData().catch(() => null);
+  const lista = (campo: string) =>
+    (form?.getAll(campo) ?? []).filter((v): v is string => typeof v === "string");
+  const opcoes = normalizarOpcoes(lista("ocultar"), lista("excluir"));
+  if (semConteudo(opcoes.ocultar)) return erro("vazio");
 
   const meRes = await gh("/user", token);
   if (!meRes.ok) return NextResponse.redirect(`${base}/`, 303);
@@ -54,7 +62,7 @@ export async function POST(req: Request) {
     return erro("setup");
   }
 
-  const novo = readmeComPainel(atual, blocoPainel(base, login));
+  const novo = readmeComPainel(atual, blocoPainel(base, login, opcoes));
   if (novo !== atual) {
     // repo recém-criado pode levar alguns segundos para aceitar commits
     let salvo = false;

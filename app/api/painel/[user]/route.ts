@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { buscarDadosPainel } from "@/lib/painel/dados";
 import { renderPainel, type Logos } from "@/lib/painel/render";
+import { lerLista, normalizarOpcoes, secoesVisiveis, semConteudo } from "@/lib/painel/opcoes";
 import logos from "@/lib/painel/lang_logos.json";
 
 // O README do usuário aponta pra cá. O GitHub busca a imagem quando alguém
@@ -61,19 +62,25 @@ export async function GET(
   }
 
   // ?excluir=repo1,repo2 tira repos das linguagens (docs, playground...)
-  const excluir = (busca.get("excluir") ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => /^[\w.-]{1,100}$/.test(s))
-    .slice(0, 20)
-    .sort();
+  // ?ocultar=grafico,calendario esconde partes do painel
+  const { ocultar, excluir } = normalizarOpcoes(
+    lerLista(busca.get("ocultar")),
+    lerLista(busca.get("excluir")),
+  );
+  if (semConteudo(ocultar)) {
+    return svgErro("Escolha pelo menos uma parte do painel", claro);
+  }
   const hoje = new Date().toISOString().slice(0, 10);
 
   try {
     const dados = await buscarDadosPainel(user, excluir, hoje);
     if (!dados) return svgErro(`Usuário ${user} não encontrado no GitHub`, claro);
     return svg(
-      renderPainel(dados.contrib, dados.stats, logos as Logos, { claro }),
+      renderPainel(dados.contrib, dados.stats, logos as Logos, {
+        claro,
+        secoes: secoesVisiveis(ocultar),
+        atualizadoEm: dados.atualizadoEm,
+      }),
       QUATRO_HORAS,
     );
   } catch (e) {
