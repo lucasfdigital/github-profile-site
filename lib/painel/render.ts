@@ -146,9 +146,26 @@ function pyFloat(x: number): string {
   return Number.isInteger(x) ? `${x}.0` : String(x);
 }
 
-function deltaKind(pct: number | null): [string, string] {
-  if (pct === null || Math.abs(pct) < 0.05) return ["0%", "neutral"];
-  return [`${pct > 0 ? "+" : ""}${pct.toFixed(1)}%`.replace(".", ","), pct > 0 ? "lime" : "rose"];
+/** Pílula de variação: "+45%", "-12%" ou "×21" quando mais que dobrou.
+ *  null quando não há base de comparação. */
+function deltaChip(atual: number, anterior: number): [string, string] | null {
+  if (anterior <= 0) return null;
+  const razao = atual / anterior;
+  const pct = (razao - 1) * 100;
+  if (Math.abs(pct) < 0.5) return ["0%", "neutral"];
+  if (razao >= 2) {
+    const r = razao >= 10 ? String(Math.round(razao)) : razao.toFixed(1).replace(".", ",");
+    return [`×${r}`, "lime"];
+  }
+  return [`${pct > 0 ? "+" : ""}${Math.round(pct)}%`, pct > 0 ? "lime" : "rose"];
+}
+
+/** Passo "redondo" para o eixo: 1, 2, 2.5 ou 5 × 10^n. */
+function passoRedondo(bruto: number): number {
+  const p = 10 ** Math.floor(Math.log10(Math.max(bruto, 1)));
+  // 2,5 só a partir de 25 (evita passo quebrado em números pequenos)
+  for (const m of p >= 10 ? [1, 2, 2.5, 5, 10] : [1, 2, 5, 10]) if (m * p >= bruto) return m * p;
+  return 10 * p;
 }
 
 function isoDia(d: Date): string {
@@ -208,38 +225,33 @@ export function renderPainel(
   const byDate = new Map(days.map((d) => [d.date, d]));
 
   const monthly = stats.monthly_totals ?? {};
-  const trail = Object.keys(monthly).sort();
-  const curVal = trail.length ? monthly[trail[trail.length - 1]] : 0;
-  const prevVal = trail.length > 1 ? monthly[trail[trail.length - 2]] : 0;
-  const dMonth = prevVal ? ((curVal - prevVal) / prevVal) * 100 : null;
-  // chart series: January -> December of the current (latest) year
-  const Y = trail.length ? Number(trail[trail.length - 1].slice(0, 4)) : new Date().getUTCFullYear();
   const pad = (m: number) => String(m).padStart(2, "0");
+  // "hoje" = último dia do calendário (os dados vão até a data da coleta)
+  const hoje = days.length ? days[days.length - 1].date : new Date().toISOString().slice(0, 10);
+  const Y = Number(hoje.slice(0, 4));
+  const mesHoje = Number(hoje.slice(5, 7));
+  const diaHoje = Number(hoje.slice(8, 10));
   const keys = Array.from({ length: 12 }, (_, i) => `${Y}-${pad(i + 1)}`);
   const mvals = keys.map((k) => monthly[k] ?? 0);
   const ytd = mvals.reduce((a, b) => a + b, 0);
-  const yp = Y - 1;
-  let yprev = 0;
-  for (let m = 1; m <= 12; m++) yprev += monthly[`${yp}-${pad(m)}`] ?? 0;
-  // full previous calendar year when available (trailing scrape is partial)
-  const yprevFull = (stats.yearly_totals ?? {})[String(yp)] || yprev;
-  let tYoy: string, kYoy: string;
-  if (yprevFull > 0) {
-    [tYoy, kYoy] = deltaKind(((ytd - yprevFull) / yprevFull) * 100);
-  } else {
-    [tYoy, kYoy] = [String(Y), "neutral"];
-  }
-  let last = 0;
-  for (let i = 11; i >= 0; i--) {
-    if (mvals[i] > 0) {
-      last = i;
-      break;
-    }
-  }
-  const cmpLbl = `${MESES[last + 1]} ${Y}`;
+  const curVal = monthly[`${Y}-${pad(mesHoje)}`] ?? 0;
 
-  const [tMonth, kMonth] = deltaKind(dMonth);
-  const [tChart, kChart] = [String(Y), "neutral"];
+  // comparações justas: sempre contra o MESMO período (o mês e o ano ainda
+  // não acabaram, então comparar com o mês/ano inteiro anterior assusta)
+  const [yAnt, mAnt] = mesHoje === 1 ? [Y - 1, 12] : [Y, mesHoje - 1];
+  let mesAntMesmosDias = 0;
+  let anoAntMesmoPeriodo = 0;
+  const limiteAnoAnt = `${Y - 1}${hoje.slice(4)}`;
+  for (const d of days) {
+    if (d.date.startsWith(`${yAnt}-${pad(mAnt)}-`) && Number(d.date.slice(8, 10)) <= diaHoje) {
+      mesAntMesmosDias += d.count;
+    }
+    if (d.date.startsWith(`${Y - 1}-`) && d.date <= limiteAnoAnt) anoAntMesmoPeriodo += d.count;
+  }
+  const [tYoy, kYoy] = deltaChip(ytd, anoAntMesmoPeriodo) ?? [String(Y), "neutral"];
+  const [tMonth, kMonth] = deltaChip(curVal, mesAntMesmosDias) ?? ["—", "neutral"];
+  const capAno = `${fmt(anoAntMesmoPeriodo)} até ${pad(diaHoje)}/${pad(mesHoje)}/${String(Y - 1).slice(2)}`;
+  const capMes = `${fmt(mesAntMesmosDias)} em ${diaHoje === 1 ? "1" : `1 a ${diaHoje}`} ${MESES[mAnt].toLowerCase()}`;
 
   const streak = stats.current_streak ?? 0;
   const longest = stats.longest_streak ?? 0;
@@ -270,7 +282,7 @@ export function renderPainel(
   const langs = (gstats.languages ?? []).slice(0, 8);
   const repoCount = gstats.repo_count ?? 0;
 
-  const H_STATS = 172, GAP = 16;
+  const H_STATS = 172, H_STATS2 = 124, GAP = 16;
   const H_CHART = 300, H_HEAT = 196;
   const H_LANG = langs.length ? 76 + (langs.length - 1) * 30 : 120;
   let y = GAP;
@@ -281,7 +293,7 @@ export function renderPainel(
   }
   if (SHOW.extras) {
     yKpi2 = y;
-    y += H_STATS + GAP;
+    y += H_STATS2 + GAP;
   }
   if (SHOW.chart) {
     yChart = y;
@@ -327,23 +339,34 @@ export function renderPainel(
 
   // ---- row 1: plain stat cards ----
   const cw = (W - 3 * GAP) / 4;
-  const plbl = trail.length > 1 ? MESES[Number(trail[trail.length - 2].slice(5, 7))] : "";
-  type Card = [string, string, string, string, string, string, string, number];
+  // [glifo, tom, rótulo, valor, pílula, tipo, legenda, atraso, unidade?]
+  type Card = [string, string, string, string, string, string, string, number, string?];
   const cards: Card[] = [
-    ["●", "emerald", "Contribuições", fmt(ytd), tYoy, kYoy, `${fmt(yprevFull)} em ${yp}`, 0.05],
-    ["◆", "orange", "Este mês", fmt(curVal), tMonth, kMonth, `${fmt(prevVal)} em ${plbl}`, 0.12],
+    ["●", "emerald", "Contribuições", fmt(ytd), tYoy, kYoy, capAno, 0.05],
+    ["◆", "orange", "Este mês", fmt(curVal), tMonth, kMonth, capMes, 0.12],
     ["★", "purple", "Melhor dia", fmt(bestN), bestLbl, "neutral", "Recorde pessoal", 0.19],
-    ["▲", "blue", "Streak atual", `${streak}`, `${longest}`, "neutral", "Recorde", 0.26],
+    ["▲", "blue", "Streak atual", `${streak}`, `${longest} dias`, "neutral", "Recorde", 0.26, "dias"],
   ];
 
-  const statCard = (x: number, y0: number, w: number, [glyph, tone, label, value, delta, kind, caption, dl]: Card) => {
-    card(x, y0, w, H_STATS);
+  // cabeçalho comum dos cartões: ícone, rótulo e o número grande (+ unidade)
+  const topoCartao = (x: number, y0: number, glyph: string, tone: string, label: string,
+    value: string, dl: number, unidade?: string, extra = "") => {
     const anim = STATIC ? "" : ` class="row" style="animation-delay:${dl.toFixed(2)}s"`;
     const [tcx, tcy] = [x + 32, y0 + 30];
+    // largura do número a 40px, estimada pela métrica de 14px
+    const vw = ((medir(value) - 2) * 40) / 14;
+    const un = unidade
+      ? `<text x="${f0(x + 16 + vw + 6)}" y="${f0(y0 + 106)}" fill="${T.SEC}" font-size="14">${esc(unidade)}</text>`
+      : "";
     p.push(`<g${anim}><rect x="${f0(x + 16)}" y="${f0(y0 + 14)}" width="32" height="32" rx="8" fill="url(#t${tone})"/>`
       + `<g transform="translate(${f0(tcx)},${f0(tcy)})">${GLYPHS[glyph]}</g>`
       + `<text x="${f0(x + 16)}" y="${f0(y0 + 66)}" fill="${T.SEC}" font-size="12">${esc(label)}</text>`
-      + `<text x="${f0(x + 16)}" y="${f0(y0 + 106)}" fill="${T.FG}" font-size="40" font-weight="600">${esc(value)}</text></g>`);
+      + `<text x="${f0(x + 16)}" y="${f0(y0 + 106)}" fill="${T.FG}" font-size="40" font-weight="600">${esc(value)}</text>${un}${extra}</g>`);
+  };
+
+  const statCard = (x: number, y0: number, w: number, [glyph, tone, label, value, delta, kind, caption, dl, unidade]: Card) => {
+    card(x, y0, w, H_STATS);
+    topoCartao(x, y0, glyph, tone, label, value, dl, unidade);
     // footer band: comparison caption (left) + delta pill (right)
     const by = y0 + H_STATS - 52;
     p.push(`<rect x="${f0(x + 8)}" y="${f0(by)}" width="${f0(w - 16)}" height="40" rx="10" fill="${T.BAND}"/>`);
@@ -365,59 +388,67 @@ export function renderPainel(
     cards.forEach((c, i) => statCard(i * (cw + GAP), yKpi, cw, c));
   }
 
-  // ---- row 1b: PRs + Stars ----
+  // ---- row 1b: PRs + Stars (cartões compactos, sem pílula) ----
   const cw2 = (W - GAP) / 2;
   const prsV = gstats.prs;
   const starsV = gstats.stars;
-  const cards2: Card[] = [
+  const cards2: [string, string, string, string, string, number][] = [
     ["PR", "sky", "Pull requests", prsV !== null && prsV !== undefined ? fmt(prsV) : "—",
-      "total", "neutral", "Criados por você", 0.33],
+      "criados por você", 0.33],
     ["★", "yellow", "Stars", starsV !== null && starsV !== undefined ? fmt(starsV) : "—",
-      "recebidas", "neutral", "Nos repositórios", 0.40],
+      "nos seus repositórios", 0.40],
   ];
   if (SHOW.extras) {
-    cards2.forEach((c, i) => statCard(i * (cw2 + GAP), yKpi2, cw2, c));
+    cards2.forEach(([glyph, tone, label, value, caption, dl], i) => {
+      const x = i * (cw2 + GAP);
+      card(x, yKpi2, cw2, H_STATS2);
+      topoCartao(x, yKpi2, glyph, tone, label, value, dl, undefined,
+        `<text x="${f0(x + cw2 - 20)}" y="${f0(yKpi2 + 104)}" fill="${T.TER}" font-size="12" text-anchor="end">${esc(caption)}</text>`);
+    });
   }
 
-  // ---- row 2: chart card ----
+  // ---- row 2: chart card (só os meses; os totais já estão nos cartões) ----
   if (SHOW.chart) {
     card(0, yChart, W, H_CHART);
-    p.push(`<text x="${px}" y="${f0(yChart + 28)}" fill="${T.SEC}" font-size="12">Contribuições</text>`);
-    const hv = fmt(ytd);
-    p.push(`<text x="${px}" y="${f0(yChart + 58)}" fill="${T.FG}" font-size="24" font-weight="600">${hv}</text>`);
-    let hx = px + hv.length * 13.2 + 10;
-    let [chh, chhw] = chip(hx, yChart + 38, tChart, kChart);
-    if (hx + chhw > W - 260) {
-      hx = W - 260 - chhw;
-      [chh, chhw] = chip(hx, yChart + 38, tChart, kChart);
+    p.push(`<text x="${px}" y="${f0(yChart + 30)}" fill="${T.SEC}" font-size="12">Contribuições por mês · ${Y}</text>`);
+    const media = Math.round(ytd / Math.max(mesHoje, 1));
+    p.push(`<text x="${f0(W - 20)}" y="${f0(yChart + 30)}" fill="${T.TER}" font-size="12" text-anchor="end">média de ${fmt(media)} por mês</text>`);
+    const [bx0, bx1] = [64, W - 20];
+    const [by0, by1] = [yChart + 62, yChart + H_CHART - 38];
+    const maxV = Math.max(0, ...mvals);
+    // eixo com números redondos (0 / 250 / 500...) e grade discreta
+    const passo = passoRedondo(Math.max(maxV, 5) / 5);
+    const topo = Math.max(passo, Math.ceil(maxV / passo) * passo);
+    for (let v = 0; v <= topo; v += passo) {
+      const yy = by1 - (v / topo) * (by1 - by0);
+      p.push(`<line x1="${bx0}" y1="${f0(yy)}" x2="${bx1}" y2="${f0(yy)}" stroke="${T.TRACK}" stroke-width="1"/>`
+        + `<text x="${bx0 - 10}" y="${f0(yy + 4)}" fill="${T.TER}" font-size="11" text-anchor="end">${fmt(v)}</text>`);
     }
-    p.push(chh);
-    p.push(`<text x="${px}" y="${f0(yChart + 78)}" fill="${T.TER}" font-size="12">${fmt(mvals[last])} em ${cmpLbl}</text>`);
-    // legend, right-aligned
-    p.push(`<text x="${f0(W - 20)}" y="${f0(yChart + 34)}" fill="${T.SEC}" font-size="12" text-anchor="end">Este período</text>`
-      + `<circle cx="${f0(W - 106)}" cy="${f0(yChart + 30)}" r="4" fill="${ACCENT}"/>`);
-    // bars
-    const [bx0, bx1] = [56, W - 16];
-    const [by0, by1] = [yChart + 96, yChart + H_CHART - 34];
-    const maxV = Math.max(...mvals);
-    const mx = maxV > 0 ? maxV : 1;
-    // y ticks
-    for (const f of [1.0, 0.66, 0.33]) {
-      const v = mx * f;
-      const yy = by1 - (by1 - by0) * f;
-      const lbl = v >= 1000 ? `${(v / 1000).toFixed(1)}k`.replace(".", ",") : f0(v);
-      p.push(`<text x="${f0(bx0 - 8)}" y="${f0(yy + 4)}" fill="${T.TER}" font-size="11" text-anchor="end">${lbl}</text>`);
-    }
-    const slot = (bx1 - bx0) / Math.max(keys.length, 1);
-    const bw = Math.max(10, slot - 26);
+    const slot = (bx1 - bx0) / keys.length;
+    const bw = Math.min(24, slot - 8);
+    const iPico = mvals.indexOf(maxV);
     keys.forEach((k, i) => {
       const v = mvals[i];
-      const hgt = Math.max(4, (v / mx) * (by1 - by0));
-      const x = bx0 + i * slot + (slot - bw) / 2;
-      const d = 0.5 + i * 0.06;
-      const at = STATIC ? "" : ` class="cell" style="animation-delay:${d.toFixed(2)}s"`;
-      p.push(`<rect${at} x="${f0(x)}" y="${f0(by1 - hgt)}" width="${f0(bw)}" height="${f0(hgt)}" rx="4" fill="${ACCENT}"><title>${k}: ${v}</title></rect>`);
-      p.push(`<text x="${f0(bx0 + i * slot + slot / 2)}" y="${f0(yChart + H_CHART - 12)}" fill="${T.TER}" font-size="12" text-anchor="middle">${MESES[Number(k.slice(5, 7))]}</text>`);
+      const cx = bx0 + i * slot + slot / 2;
+      // meses que ainda não chegaram ficam apagados
+      const futuro = i + 1 > mesHoje ? ' fill-opacity="0.4"' : "";
+      p.push(`<text x="${f0(cx)}" y="${f0(yChart + H_CHART - 14)}" fill="${T.TER}"${futuro} font-size="12" text-anchor="middle">${MESES[i + 1]}</text>`);
+      if (v <= 0) return; // mês vazio: sem barra de mentira
+      const hgt = Math.max(2, (v / topo) * (by1 - by0));
+      const [x0, topY] = [cx - bw / 2, by1 - hgt];
+      const r = Math.min(4, hgt, bw / 2);
+      // ponta arredondada em cima, base reta no eixo
+      const d = `M${x0.toFixed(1)},${by1}V${(topY + r).toFixed(1)}`
+        + `A${r},${r} 0 0 1 ${(x0 + r).toFixed(1)},${topY.toFixed(1)}`
+        + `H${(x0 + bw - r).toFixed(1)}A${r},${r} 0 0 1 ${(x0 + bw).toFixed(1)},${(topY + r).toFixed(1)}`
+        + `V${by1}Z`;
+      const at = STATIC ? "" : ` class="cell" style="animation-delay:${(0.5 + i * 0.06).toFixed(2)}s"`;
+      p.push(`<path${at} d="${d}" fill="${ACCENT}"><title>${MESES[i + 1]} ${Y}: ${fmt(v)} contribuições</title></path>`);
+      // valor só no pico e no mês atual (o resto fica no eixo)
+      if (i === iPico || i + 1 === mesHoje) {
+        const mt = STATIC ? "" : ` class="meta" style="animation-delay:${(0.9 + i * 0.06).toFixed(2)}s"`;
+        p.push(`<text${mt} x="${f0(cx)}" y="${f0(topY - 8)}" fill="${T.SEC}" font-size="11" font-weight="500" text-anchor="middle">${fmt(v)}</text>`);
+      }
     });
   }
 
@@ -455,7 +486,7 @@ export function renderPainel(
   if (SHOW.heatmap) {
     card(0, yHeat, W, H_HEAT);
     p.push(`<text x="${px}" y="${f0(yHeat + 26)}" fill="${T.SEC}" font-size="12">Calendário</text>`);
-    const [CELL, STEP, LEFT, TOP] = [12, 15, 64, yHeat + 44];
+    const [CELL, STEP, LEFT, TOP] = [12, 15, 64, yHeat + 52];
     let lastM: number | null = null;
     let lastX = -100.0;
     weeks.forEach((week, wi) => {
@@ -487,20 +518,23 @@ export function renderPainel(
         if (!dd) return;
         const [lv, ct] = [dd.level, dd.count];
         const color = paleta[lv >= 4 && ct >= 30 ? 5 : Math.max(0, Math.min(lv, 4))];
-        p.push(`<rect x="${f0(x)}" y="${f0(yy)}" width="${CELL}" height="${CELL}" rx="2.5" fill="${color}"><title>${ct} em ${dd.date}</title></rect>`);
+        const dataBr = `${dd.date.slice(8, 10)}/${dd.date.slice(5, 7)}/${dd.date.slice(0, 4)}`;
+        p.push(`<rect x="${f0(x)}" y="${f0(yy)}" width="${CELL}" height="${CELL}" rx="2.5" fill="${color}"><title>${ct} em ${dataBr}</title></rect>`);
       });
       p.push("</g>");
     });
-    const foot = `streak atual ${streak} dias · melhor dia ${bestD} (${fmt(bestN)})`;
+    // rodapé com o total dos 12 meses (streak e melhor dia já estão nos cartões)
+    const foot = `${fmt(payload.total_last_year ?? 0)} contribuições nos últimos 12 meses`;
     const fat = STATIC ? "" : ' class="meta" style="animation-delay:1.8s"';
     p.push(`<text${fat} x="${px}" y="${f0(yHeat + H_HEAT - 12)}" fill="${T.TER}" font-size="11">${esc(foot)}</text>`);
-    // Less -> More legend, bottom-right (same line as the footer)
-    const llx = W - 196;
-    p.push(`<text x="${f0(llx - 40)}" y="${f0(yHeat + H_HEAT - 12)}" fill="${T.TER}" font-size="10">Less</text>`);
-    T.HEAT.forEach((c, i) => {
+    // legenda Menos -> Mais, com todos os tons usados (sem repetir cor)
+    const tons = [...new Set(paleta)];
+    const llx = W - 128 - tons.length * 13;
+    p.push(`<text x="${f0(llx - 8)}" y="${f0(yHeat + H_HEAT - 12)}" fill="${T.TER}" font-size="10" text-anchor="end">Menos</text>`);
+    tons.forEach((c, i) => {
       p.push(`<rect x="${f0(llx + i * 13)}" y="${f0(yHeat + H_HEAT - 22)}" width="10" height="10" rx="2" fill="${c}"/>`);
     });
-    p.push(`<text x="${f0(llx + 70)}" y="${f0(yHeat + H_HEAT - 12)}" fill="${T.TER}" font-size="10">More</text>`);
+    p.push(`<text x="${f0(llx + tons.length * 13 + 4)}" y="${f0(yHeat + H_HEAT - 12)}" fill="${T.TER}" font-size="10">Mais</text>`);
   }
 
   p.push("</svg>");
