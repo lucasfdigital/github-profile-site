@@ -42,7 +42,7 @@ export default function StatusMonitor({ repo }: { repo: string }) {
         if (!r.ok) throw new Error("api");
         const commits = (await r.json()) as { commit: { message: string } }[];
         const msgs = commits.map((c) => c.commit.message).join("\n");
-        const readme = /setup: README do perfil/.test(msgs);
+        const readme = /^setup:/m.test(msgs);
         const refresh = /chore: refresh/.test(msgs);
         setDone({ repo: true, readme, refresh });
         if (readme && refresh) clearInterval(id);
@@ -63,7 +63,7 @@ export default function StatusMonitor({ repo }: { repo: string }) {
           const msgs = commits.map((c) => c.commit.message).join("\n");
           setDone({
             repo: true,
-            readme: /setup: README do perfil/.test(msgs),
+            readme: /^setup:/m.test(msgs),
             refresh: /chore: refresh/.test(msgs),
           });
         })

@@ -35,6 +35,16 @@ export async function POST(req: Request) {
   if (!gen.ok && gen.status !== 422) {
     return NextResponse.redirect(`${base}/gerar?erro=github`, 303);
   }
+  const exists = gen.status === 422;
+  if (exists) {
+    // repo user/user que não veio do template (README de perfil antigo):
+    // não mexe nele, avisa o usuário.
+    const wf = await gh(
+      `/repos/${repo}/contents/.github/workflows/update-profile-art.yml`,
+      token,
+    );
+    if (!wf.ok) return NextResponse.redirect(`${base}/gerar?erro=existe`, 303);
+  }
 
   try {
     // 2. ref com retry (o git do repo recém-criado propaga em segundos)
@@ -55,6 +65,13 @@ export async function POST(req: Request) {
     const prRes = await gh(`/repos/${repo}/contents/profile/README.md`, token, {
       headers: { Accept: "application/vnd.github.raw" },
     });
+    if (prRes.status === 404 && exists) {
+      // setup já feito numa tentativa anterior (profile/ foi removido)
+      return NextResponse.redirect(
+        `${base}/sucesso?repo=${encodeURIComponent(repo)}`,
+        303,
+      );
+    }
     if (!prRes.ok) throw new Error(`profile README: ${prRes.status}`);
     const profileReadme = await prRes.text();
 
@@ -103,7 +120,8 @@ export async function POST(req: Request) {
       }),
     )) as { sha: string };
     await getJson(
-      await gh(`/repos/${repo}/git/ref/heads/main`, token, {
+      // atualizar ref é no plural (git/refs); git/ref/... só aceita GET
+      await gh(`/repos/${repo}/git/refs/heads/main`, token, {
         method: "PATCH",
         body: JSON.stringify({ sha: commit.sha }),
       }),

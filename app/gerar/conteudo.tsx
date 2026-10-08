@@ -23,8 +23,9 @@ export default async function Conteudo({
       </p>
       {erro === "existe" && (
         <p className="mt-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-200">
-          Esse repo já existe na sua conta. Apague-o ou use-o como está — o
-          workflow do template continua valendo.
+          Você já tem o repo <code>{me.login}/{me.login}</code> e ele não veio
+          deste template — não mexi nele. Renomeie esse repo (Settings →
+          Repository name) e tente de novo.
         </p>
       )}
       {(erro === "setup" || erro === "github") && (
