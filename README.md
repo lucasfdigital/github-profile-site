@@ -1,6 +1,20 @@
 # github-profile-site
 
-Site configurador do [github-profile-dashboard](../github-profile-dashboard): landing + OAuth do GitHub → cria o repo `user/user` a partir do template e dispara a primeira atualização.
+Site do [github-profile-dashboard](https://github.com/lucasfdigital/github-profile-dashboard): landing + OAuth do GitHub → coloca o painel no README do repo `user/user`.
+
+## Como o painel se atualiza
+
+O README do usuário tem uma imagem que aponta para este site:
+
+```
+/api/painel/USUARIO              tema escuro
+/api/painel/USUARIO?tema=claro   tema claro
+/api/painel/USUARIO?excluir=repo1,repo2   tira repos das linguagens
+```
+
+Quando alguém abre o perfil, o GitHub pede a imagem; a rota busca os dados públicos do usuário (uma consulta GraphQL) e monta o SVG. A CDN guarda cada imagem por 4h, então os dados se renovam sozinhos sem nada rodar na conta do usuário. O desenho é um port fiel de `scripts/render_profile_top.py` do template (`lib/painel/render.ts`).
+
+Para parar, o usuário apaga do README o bloco entre `github-profile-dash:inicio` e `github-profile-dash:fim`.
 
 ## Rodar local
 
@@ -18,7 +32,7 @@ npm run dev
 4. **Authorization callback URL**: `https://sua-url/api/auth/callback` (local: `http://localhost:3000/api/auth/callback`)
 5. Gere um **Client secret** e preencha `.env.local`
 
-Scopes pedidos ao usuário: `repo` (criar o repo) + `workflow` (disparar o workflow). O token vive 30 min em cookie httpOnly e é apagado ao concluir — nada é guardado.
+Scope pedido ao usuário: `public_repo` (criar o repo de perfil e editar o README). O token vive 30 min em cookie httpOnly e é apagado ao concluir — nada é guardado.
 
 ## Deploy na Vercel
 
@@ -26,4 +40,13 @@ Scopes pedidos ao usuário: `repo` (criar o repo) + `workflow` (disparar o workf
 npx vercel
 ```
 
-Adicione as 3 envs (`GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `NEXT_PUBLIC_APP_URL`) no projeto e atualize a callback URL no OAuth App pra URL final.
+Envs do projeto:
+
+| Env | Pra quê |
+|---|---|
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | OAuth App |
+| `NEXT_PUBLIC_APP_URL` | URL final (callback do OAuth e links das imagens) |
+| `GITHUB_TOKEN` | Token **seu** para as consultas do painel: token classic **sem nenhum scope marcado** (só lê dados públicos). Sem ele o painel mostra "Painel indisponível" |
+| `BLOCKED_USERS` | Opcional: usernames separados por vírgula que não podem ter painel |
+
+Atualize a callback URL no OAuth App pra URL final.

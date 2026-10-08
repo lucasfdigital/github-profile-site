@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "github-profile-dashboard — dashboard animado pro seu perfil",
   description:
-    "KPIs, linguagens e calendário com dados reais do GitHub. Sem token, sem servidor. Conecte e ganhe o README com cron.",
+    "KPIs, linguagens e calendário com dados reais do GitHub, atualizados sozinhos a cada 4 horas. Conecte e ganhe o painel no README do seu perfil.",
 };
 
 export default function RootLayout({

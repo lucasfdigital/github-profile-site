@@ -18,20 +18,21 @@ export default async function Conteudo({
     <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col items-center px-6 py-16">
       <h1 className="text-3xl font-bold">Quase lá, {me.login} 👋</h1>
       <p className="mt-2 text-center text-zinc-400">
-        Vou criar o repo <code className="text-zinc-200">{me.login}/{me.login}</code> a
-        partir do template e disparar a primeira atualização.
+        Vou colocar o painel no README do repo{" "}
+        <code className="text-zinc-200">{me.login}/{me.login}</code> (crio o
+        repo se ele não existir). Se já tiver um README, o painel entra no topo
+        e o resto fica igual.
       </p>
-      {erro === "existe" && (
+      {erro === "privado" && (
         <p className="mt-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-200">
-          Esse repo já existe na sua conta. Apague-o ou use-o como está — o
-          workflow do template continua valendo.
+          Seu repo <code>{me.login}/{me.login}</code> é privado, e o GitHub só
+          mostra o README de perfil em repo público. Torne-o público (Settings →
+          Change visibility) e tente de novo.
         </p>
       )}
       {(erro === "setup" || erro === "github") && (
         <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">
-          Falhou ao configurar o repo ({erro}). Tenta de novo em 1 minuto — se
-          persistir, cria pelo template manual: github.com/lucasfdigital/github-profile-dashboard
-          → Use this template.
+          Falhou ao configurar o repo ({erro}). Tenta de novo em 1 minuto.
         </p>
       )}
       <form action="/api/generate" method="POST" className="mt-8 w-full">
@@ -43,8 +44,9 @@ export default async function Conteudo({
         </button>
       </form>
       <p className="mt-4 text-xs text-zinc-500">
-        Scopes usados uma única vez: criar o repo e disparar o workflow. O token
-        expira em 30 minutos e não é guardado.
+        Permissão usada uma única vez: criar/editar o README do seu repo de
+        perfil (só repos públicos). O token expira em 30 minutos e não é
+        guardado.
       </p>
     </main>
   );

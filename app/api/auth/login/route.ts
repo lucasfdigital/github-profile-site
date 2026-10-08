@@ -14,7 +14,8 @@ export async function GET(req: Request) {
     "redirect_uri",
     `${appUrl(req)}/api/auth/callback`,
   );
-  url.searchParams.set("scope", "repo workflow");
+  // só repos públicos: criar/editar o README do repo de perfil
+  url.searchParams.set("scope", "public_repo");
   url.searchParams.set("state", state);
   const res = NextResponse.redirect(url.toString());
   res.cookies.set("gh_state", state, {
