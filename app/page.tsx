@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import StarsButton from "./components/StarsButton";
+import Topo from "./components/Topo";
 import PreviewPainel from "./components/PreviewPainel";
 import CodigoReadme from "./components/CodigoReadme";
 
@@ -103,39 +103,7 @@ export default function Home() {
         className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[640px] bg-[radial-gradient(ellipse_60%_55%_at_50%_0%,rgba(16,185,129,0.20),transparent)]"
       />
 
-      <header className="sticky top-0 z-10 border-b border-white/10 bg-[#0b0b0e]/80 backdrop-blur">
-        <nav className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
-          <a href="#topo" className="flex items-center gap-2 font-bold">
-            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-linear-to-b from-[#10B981] to-[#059669] text-[10px] text-white">
-              ●
-            </span>
-            profile-dashboard
-          </a>
-          <div className="hidden items-center gap-6 text-sm text-zinc-400 md:flex">
-            <a href="#experimente" className="transition hover:text-white">
-              Experimente
-            </a>
-            <a href="#recursos" className="transition hover:text-white">
-              Recursos
-            </a>
-            <a href="#como-funciona" className="transition hover:text-white">
-              Como funciona
-            </a>
-            <a href="#privacidade" className="transition hover:text-white">
-              Privacidade
-            </a>
-          </div>
-          <div className="flex items-center gap-2">
-            <StarsButton repo="lucasfdigital/github-profile-dashboard" />
-            <a
-              href="/api/auth/login"
-              className="rounded-lg bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-black transition hover:bg-emerald-400"
-            >
-              Conectar
-            </a>
-          </div>
-        </nav>
-      </header>
+      <Topo />
 
       <div className="mx-auto flex w-full max-w-5xl flex-col items-center px-4 pb-16 pt-16 sm:px-6 sm:pt-20">
         <p className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-sm text-emerald-300">
@@ -155,6 +123,7 @@ export default function Home() {
           perfil do GitHub. Sem robô, sem token guardado.
         </p>
         <div className="mt-8 flex w-full flex-col items-stretch justify-center gap-3 sm:w-auto sm:flex-row">
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- rota de API: navegação completa, sem prefetch */}
           <a
             href="/api/auth/login"
             className="rounded-xl bg-emerald-500 px-8 py-3 text-center text-lg font-semibold text-black shadow-[0_0_40px_-10px_rgba(16,185,129,0.8)] transition hover:bg-emerald-400"
@@ -213,6 +182,7 @@ export default function Home() {
             </li>
           ))}
         </ol>
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- rota de API: navegação completa, sem prefetch */}
         <a
           href="/api/auth/login"
           className="mt-8 rounded-xl bg-emerald-500 px-8 py-3 text-lg font-semibold text-black transition hover:bg-emerald-400"

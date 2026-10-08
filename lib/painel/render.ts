@@ -31,6 +31,7 @@ export type Estatisticas = {
 export type Logos = Record<string, { path: string; color?: string }>;
 
 export type Secoes = {
+  header: boolean;
   kpis: boolean;
   extras: boolean;
   chart: boolean;
@@ -39,6 +40,7 @@ export type Secoes = {
 };
 
 export const TODAS_SECOES: Secoes = {
+  header: true,
   kpis: true,
   extras: true,
   chart: true,
@@ -176,7 +178,7 @@ export function renderPainel(
   payload: Contribuicoes,
   gstats: Estatisticas,
   logos: Logos,
-  opts: { claro: boolean; estatico?: boolean; secoes?: Secoes },
+  opts: { claro: boolean; estatico?: boolean; secoes?: Secoes; atualizadoEm?: string },
 ): string {
   const T = opts.claro ? TEMAS.claro : TEMAS.escuro;
   const STATIC = opts.estatico ?? false;
@@ -286,7 +288,14 @@ export function renderPainel(
   const H_CHART = 300, H_HEAT = 196;
   const H_LANG = langs.length ? 76 + (langs.length - 1) * 30 : 120;
   let y = GAP;
-  let yKpi = 0, yKpi2 = 0, yChart = 0, yLang = 0, yHeat = 0;
+  let yTopo = 0, yKpi = 0, yKpi2 = 0, yChart = 0, yLang = 0, yHeat = 0;
+  // topo: nome à esquerda, hora da atualização à direita
+  const H_TOPO = 28;
+  const temTopo = SHOW.header && !!opts.atualizadoEm;
+  if (temTopo) {
+    yTopo = y;
+    y += H_TOPO + GAP;
+  }
   if (SHOW.kpis) {
     yKpi = y;
     y += H_STATS + GAP;
@@ -336,6 +345,28 @@ export function renderPainel(
   };
 
   const px = 20;
+
+  // ---- topo: "GitHub Dashboard" + "atualizado em 08/10, 19:30 (Brasília)" ----
+  if (temTopo && opts.atualizadoEm) {
+    const quando = new Intl.DateTimeFormat("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(opts.atualizadoEm));
+    const textoHora = `atualizado em ${quando} (Brasília)`;
+    const cy = yTopo + H_TOPO / 2;
+    const mt = STATIC ? "" : ' class="meta" style="animation-delay:0.05s"';
+    // a bolinha vai dentro do texto: acompanha a largura em qualquer fonte
+    p.push(`<g${mt}>`
+      + `<rect x="2" y="${f0(cy - 12)}" width="24" height="24" rx="7" fill="url(#temerald)"/>`
+      + `<circle cx="14" cy="${f0(cy)}" r="4.5" fill="#FFFFFF"/>`
+      + `<text x="36" y="${f0(cy + 5)}" fill="${T.FG}" font-size="15" font-weight="600">GitHub Dashboard</text>`
+      + `<text x="${W - 4}" y="${f0(cy + 4)}" fill="${T.TER}" font-size="12" text-anchor="end">`
+      + `<tspan fill="${ACCENT}" font-size="10">●</tspan> ${esc(textoHora)}</text>`
+      + "</g>");
+  }
 
   // ---- row 1: plain stat cards ----
   const cw = (W - 3 * GAP) / 4;

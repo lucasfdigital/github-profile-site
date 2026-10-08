@@ -1,10 +1,14 @@
 import { Suspense } from "react";
 import Conteudo from "./conteudo";
+import Topo from "../components/Topo";
 
 export default function Sucesso() {
   return (
-    <Suspense>
-      <Conteudo />
-    </Suspense>
+    <>
+      <Topo />
+      <Suspense>
+        <Conteudo />
+      </Suspense>
+    </>
   );
 }

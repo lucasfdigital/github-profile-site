@@ -95,8 +95,8 @@ export default function PreviewPainel({ inicial }: { inicial: string }) {
         )}
       </div>
       <p className="mt-2 text-center text-xs text-zinc-500">
-        <a href={src} target="_blank" rel="noopener" className="underline hover:text-zinc-300">
-          abrir em tamanho real ↗
+        <a href={`/${user}`} className="underline hover:text-zinc-300">
+          abrir a página de @{user} ↗
         </a>
       </p>
     </div>
